@@ -9,7 +9,7 @@ class Difference_of_Gaussian(object):
         self.num_octaves = 2
         self.num_DoG_images_per_octave = 4
         self.num_guassian_images_per_octave = self.num_DoG_images_per_octave + 1
-        self.debug_mode = True
+        self.debug_mode = False
 
     def get_octave_blur(self, source):
         result = [source.copy()]
