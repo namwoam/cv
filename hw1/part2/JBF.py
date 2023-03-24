@@ -9,7 +9,6 @@ class Joint_bilateral_filter(object):
         self.wndw_size = 6*sigma_s+1
         self.pad_w = 3*sigma_s
         self.debug_mode = False
-
     def joint_bilateral_filter(self, img, guidance):
         BORDER_TYPE = cv2.BORDER_REFLECT
         padded_img = cv2.copyMakeBorder(
