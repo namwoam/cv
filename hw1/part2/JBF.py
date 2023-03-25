@@ -9,6 +9,7 @@ class Joint_bilateral_filter(object):
         self.wndw_size = 6*sigma_s+1
         self.pad_w = 3*sigma_s
         self.debug_mode = False
+
     def joint_bilateral_filter(self, img, guidance):
         BORDER_TYPE = cv2.BORDER_REFLECT
         padded_img = cv2.copyMakeBorder(
@@ -32,22 +33,12 @@ class Joint_bilateral_filter(object):
             window = windows[x][y]
             color_difference_square = np.zeros(
                 (self.wndw_size, self.wndw_size), dtype=np.float64)
-            #color_difference_square = np.sum([np.multiply(el - el[self.wndw_size//2][self.wndw_size//2], el - el[self.wndw_size//2][self.wndw_size//2]).reshape((self.wndw_size, self.wndw_size)) for el in window],  axis=0)
-            for channel in window:
-                middle_element = channel[self.wndw_size//2][self.wndw_size//2]
-                single_color_difference_square = np.multiply(
-                    (channel - middle_element), (channel - middle_element))
-                if self.debug_mode:
-                    print("Value of center:")
-                    print(middle_element)
-                    print("Color of one channel:")
-                    print(channel.reshape((19,19)))
-                    print("Color difference squared")
-                    print(single_color_difference_square.reshape((19,19)))
-                    pass
-                single_color_difference_square = single_color_difference_square.reshape(
-                    (self.wndw_size, self.wndw_size))
-                color_difference_square += single_color_difference_square
+            middle_element = window[:, self.wndw_size//2, self.wndw_size//2]
+            color_difference = window.reshape(
+                (-1, self.wndw_size, self.wndw_size)) - middle_element[:, None]
+            color_difference_square = np.multiply(
+                color_difference, color_difference)
+            color_difference_square = np.sum(color_difference_square , axis=0)
             range_kernal = np.exp(-(color_difference_square /
                                   (2*(self.sigma_r**2))))
             kernal = np.multiply(range_kernal, gaussain_kernal)
