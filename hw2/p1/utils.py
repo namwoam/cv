@@ -5,30 +5,39 @@ from cyvlfeat.sift.dsift import dsift
 from cyvlfeat.kmeans import kmeans
 from scipy.spatial.distance import cdist
 
+import random
+
 CAT = ['Kitchen', 'Store', 'Bedroom', 'LivingRoom', 'Office',
        'Industrial', 'Suburb', 'InsideCity', 'TallBuilding', 'Street',
        'Highway', 'OpenCountry', 'Coast', 'Mountain', 'Forest']
 
 CAT2ID = {v: k for k, v in enumerate(CAT)}
 
+DSIFT_STEP = 2
+
+DEBUG = True
+
+DISTANCE_METRIC = "minkowski"
+
 ########################################
 ###### FEATURE UTILS              ######
 ###### use TINY_IMAGE as features ######
 ########################################
 
-###### Step 1-a
+# Step 1-a
+
+
 def get_tiny_images(img_paths):
     '''
-    Input : 
+    Input :
         img_paths (N) : list of string of image paths
     Output :
-        tiny_img_feats (N, d) : ndarray of resized and then vectorized 
+        tiny_img_feats (N, d) : ndarray of resized and then vectorized
                                 tiny images
     NOTE :
         1. N is the total number of images
         2. if the images are resized to 16x16, d would be 256
     '''
-    
     #################################################################
     # TODO:                                                         #
     # To build a tiny image feature, you can follow below steps:    #
@@ -42,11 +51,24 @@ def get_tiny_images(img_paths):
     #       slightly increase the performance                       #
     #################################################################
 
+    feature_image_size = 16
     tiny_img_feats = []
 
-    #################################################################
-    #                        END OF YOUR CODE                       #
-    #################################################################
+    for image_path in img_paths:
+        image = Image.open(image_path)
+        width, height = image.size
+        crop_size = min(width, height)
+        crop_image = image.crop(
+            ((width - crop_size)//2, (height - crop_size)//2, (width + crop_size)//2, (height + crop_size)//2))
+        feature_image = crop_image.resize(
+            (feature_image_size, feature_image_size))
+        feature_vector = np.array(feature_image).reshape(
+            feature_image_size*feature_image_size).astype(np.float32)
+        feature_vector = feature_vector / np.linalg.norm(feature_vector)
+        tiny_img_feats.append(feature_vector)
+        #################################################################
+        #                        END OF YOUR CODE                       #
+        #################################################################
 
     return tiny_img_feats
 
@@ -55,20 +77,22 @@ def get_tiny_images(img_paths):
 ###### use BAG_OF_SIFT as features ######
 #########################################
 
-###### Step 1-b-1
+# Step 1-b-1
+
+
 def build_vocabulary(img_paths, vocab_size=400):
     '''
-    Input : 
+    Input :
         img_paths (N) : list of string of image paths (training)
         vocab_size : number of clusters desired
     Output :
         vocab (vocab_size, sift_d) : ndarray of clusters centers of k-means
     NOTE :
         1. sift_d is 128
-        2. vocab_size is up to you, larger value will works better (to a point) 
+        2. vocab_size is up to you, larger value will works better (to a point)
            but be slower to compute, you can set vocab_size in p1.py
     '''
-    
+
     ##################################################################################
     # TODO:                                                                          #
     # To build vocabularies from training images, you can follow below steps:        #
@@ -102,11 +126,24 @@ def build_vocabulary(img_paths, vocab_size=400):
     ##################################################################################
     #                                END OF YOUR CODE                                #
     ##################################################################################
-    
-    # return vocab
-    return None
 
-###### Step 1-b-2
+    features = []
+    for image_path in img_paths:
+        image = Image.open(image_path)
+        frames, descriptors = dsift(np.array(image).astype(
+            np.float32), step=DSIFT_STEP, fast=True)
+        for idx in random.sample(range(len(descriptors)), len(descriptors)//20):
+            features.append(descriptors[idx])
+        if DEBUG:
+            print(f"vocab of {image_path} done!")
+    # return vocab
+    if DEBUG:
+        print(f"start k-means , size={len(features)}")
+    return kmeans(np.array(features).astype(np.float32), num_centers=vocab_size)
+
+# Step 1-b-2
+
+
 def get_bags_of_sifts(img_paths, vocab):
     '''
     Input :
@@ -141,13 +178,24 @@ def get_bags_of_sifts(img_paths, vocab):
     # NOTE:                                                                    #
     #   1. we recommend first completing function 'build_vocabulary()'         #
     ############################################################################
-
     img_feats = []
 
+    for image_path in img_paths:
+        image = Image.open(image_path)
+        frames, descriptors = dsift(np.array(image).astype(
+            np.float32), step=DSIFT_STEP, fast=True)
+        distances = cdist(vocab, descriptors, metric=DISTANCE_METRIC)
+        nearest_cluster_center_id = np.argmin(distances, axis=0)
+        histogram, edges = np.histogram(
+            nearest_cluster_center_id, bins=len(vocab))
+        histogram_normalized = histogram / sum(histogram)
+        if DEBUG:
+            print(f"histogram for {image_path} done")
+        img_feats.append(histogram_normalized)
     ############################################################################
     #                                END OF YOUR CODE                          #
     ############################################################################
-    
+
     return img_feats
 
 ################################################
@@ -155,16 +203,18 @@ def get_bags_of_sifts(img_paths, vocab):
 ###### use NEAREST_NEIGHBOR as classifier ######
 ################################################
 
-###### Step 2
+# Step 2
+
+
 def nearest_neighbor_classify(train_img_feats, train_labels, test_img_feats):
     '''
-    Input : 
+    Input :
         train_img_feats (N, d) : ndarray of feature of training images
-        train_labels (N) : list of string of ground truth category for each 
+        train_labels (N) : list of string of ground truth category for each
                            training image
         test_img_feats (M, d) : ndarray of feature of testing images
     Output :
-        test_predicts (M) : list of string of predict category for each 
+        test_predicts (M) : list of string of predict category for each
                             testing image
     NOTE:
         1. d is the dimension of the feature representation, depending on using
@@ -206,5 +256,5 @@ def nearest_neighbor_classify(train_img_feats, train_labels, test_img_feats):
     ###########################################################################
     #                               END OF YOUR CODE                          #
     ###########################################################################
-    
+
     return test_predicts
