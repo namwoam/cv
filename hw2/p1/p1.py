@@ -20,20 +20,25 @@ ABBR_CAT = ['Kit', 'Sto', 'Bed', 'Liv', 'Off',
             'Ind', 'Sub', 'Cty', 'Bld', 'St',
             'HW', 'OC', 'Cst', 'Mnt', 'For']
 
-NUM_PER_CAT = 100 # number of training or testing examples per category
+NUM_PER_CAT = 100  # number of training or testing examples per category
 assert NUM_PER_CAT <= 100
 
+
 def main():
-    
+
     parser = argparse.ArgumentParser()
-    parser.add_argument('--feature', help='feature', type=str, default='bag_of_sift')
-    parser.add_argument('--classifier', help='classifier', type=str, default='nearest_neighbor')
-    parser.add_argument('--dataset_dir', help='dataset directory', type=str, default='../hw2_data/p1_data/')
+    parser.add_argument('--feature', help='feature',
+                        type=str, default='bag_of_sift')
+    parser.add_argument('--classifier', help='classifier',
+                        type=str, default='nearest_neighbor')
+    parser.add_argument('--dataset_dir', help='dataset directory',
+                        type=str, default='../hw2_data/p1_data/')
     args = parser.parse_args()
 
     print('Loading all data paths and labels...')
-    train_img_paths, test_img_paths, train_labels, test_labels = get_img_paths_and_labels(args.dataset_dir)
-    
+    train_img_paths, test_img_paths, train_labels, test_labels = get_img_paths_and_labels(
+        args.dataset_dir)
+
     ####################################
     ###### Step 1: Build Features ######
     ####################################
@@ -48,8 +53,10 @@ def main():
     elif args.feature == 'bag_of_sift':
         # vocab and features is saved to disk to avoid recomputing the vocabulary every time
         if os.path.isfile('vocab.pkl') is False:
-            print('No existing visual word vocabulary found. Computing one from training images')
-            vocab_size = 400   # vocab_size is up to you, larger values will work better (to a point) but be slower to compute
+            print(
+                'No existing visual word vocabulary found. Computing one from training images')
+            # vocab_size is up to you, larger values will work better (to a point) but be slower to compute
+            vocab_size = 1000
             vocab = build_vocabulary(train_img_paths, vocab_size)
             with open('vocab.pkl', 'wb') as f:
                 pickle.dump(vocab, f, protocol=pickle.HIGHEST_PROTOCOL)
@@ -60,15 +67,17 @@ def main():
         if os.path.isfile('train_image_feats.pkl') is False:
             train_img_feats = get_bags_of_sifts(train_img_paths, vocab)
             with open('train_image_feats.pkl', 'wb') as f:
-                pickle.dump(train_img_feats, f, protocol=pickle.HIGHEST_PROTOCOL)
+                pickle.dump(train_img_feats, f,
+                            protocol=pickle.HIGHEST_PROTOCOL)
         else:
             with open('train_image_feats.pkl', 'rb') as f:
                 train_img_feats = pickle.load(f)
         # test_image_feats
         if os.path.isfile('test_image_feats.pkl') is False:
-            test_img_feats  = get_bags_of_sifts(test_img_paths, vocab)
+            test_img_feats = get_bags_of_sifts(test_img_paths, vocab)
             with open('test_image_feats.pkl', 'wb') as f:
-                pickle.dump(test_img_feats, f, protocol=pickle.HIGHEST_PROTOCOL)
+                pickle.dump(test_img_feats, f,
+                            protocol=pickle.HIGHEST_PROTOCOL)
         else:
             with open('test_image_feats.pkl', 'rb') as f:
                 test_img_feats = pickle.load(f)
@@ -82,7 +91,8 @@ def main():
     ##### TODO: nearest_neighbor_classify() in utils.py #####
     print(f'Classifier: {args.classifier}')
     if args.classifier == 'nearest_neighbor':
-        pred_cats = nearest_neighbor_classify(train_img_feats, train_labels, test_img_feats)
+        pred_cats = nearest_neighbor_classify(
+            train_img_feats, train_labels, test_img_feats)
 
     elif args.classifier == 'random_classifier':
         pred_cats = test_labels[:]
@@ -92,14 +102,16 @@ def main():
         raise NameError('Unknown classifier type')
 
     # Compute Accuracy (DO NOT MODIFY)
-    accuracy = float(len([x for x in zip(test_labels, pred_cats) if x[0] == x[1]])) / float(len(test_labels))
+    accuracy = float(len([x for x in zip(test_labels, pred_cats)
+                     if x[0] == x[1]])) / float(len(test_labels))
     print(f'Accuracy = {accuracy}\n')
     # Plot Confusion Matrix (You don't need to write this code)
-    test_labels_ids = [CAT2ID[x] for x in test_labels] # (1500)
-    pred_cats_ids   = [CAT2ID[x] for x in pred_cats  ] # (1500)
+    test_labels_ids = [CAT2ID[x] for x in test_labels]  # (1500)
+    pred_cats_ids = [CAT2ID[x] for x in pred_cats]  # (1500)
 
     if pred_cats_ids:
         plot_confusion_mtx(test_labels_ids, pred_cats_ids, args.feature)
+
 
 def get_img_paths_and_labels(data_path):
 
@@ -107,19 +119,23 @@ def get_img_paths_and_labels(data_path):
     train_labels, test_labels = [], []
 
     for cat in CAT:
-        cat_train_img_paths = glob(os.path.join(data_path, 'train', cat, '*.jpg'))
-        cat_test_img_paths = glob(os.path.join(data_path, 'test', cat, '*.jpg'))
+        cat_train_img_paths = glob(os.path.join(
+            data_path, 'train', cat, '*.jpg'))
+        cat_test_img_paths = glob(os.path.join(
+            data_path, 'test', cat, '*.jpg'))
         for i in range(NUM_PER_CAT):
             train_img_paths.append(cat_train_img_paths[i])
             test_img_paths.append(cat_test_img_paths[i])
             train_labels.append(cat)
             test_labels.append(cat)
 
-    return train_img_paths, test_img_paths, train_labels, test_labels # (1500), (1500), (1500), (1500)
+    # (1500), (1500), (1500), (1500)
+    return train_img_paths, test_img_paths, train_labels, test_labels
+
 
 def plot_confusion_mtx(test_labels_ids, pred_cats, feature_type):
     # compute confusion matrix
-    cm = confusion_matrix(test_labels_ids, pred_cats) # (15, 15)
+    cm = confusion_matrix(test_labels_ids, pred_cats)  # (15, 15)
     # normalize the confusion matrix by row (i.e number of samples in each class)
     cm_normalized = cm.astype(np.float32) / np.sum(cm, axis=1)[:, np.newaxis]
     # plot and save the image of confusion matrix
@@ -133,6 +149,7 @@ def plot_confusion_mtx(test_labels_ids, pred_cats, feature_type):
     plt.ylabel('True label')
     plt.xlabel('Predicted label')
     plt.savefig(f'{feature_type}.png')
+
 
 if __name__ == '__main__':
     main()

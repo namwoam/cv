@@ -6,6 +6,7 @@ from cyvlfeat.kmeans import kmeans
 from scipy.spatial.distance import cdist
 
 import random
+import torch
 
 CAT = ['Kitchen', 'Store', 'Bedroom', 'LivingRoom', 'Office',
        'Industrial', 'Suburb', 'InsideCity', 'TallBuilding', 'Street',
@@ -15,9 +16,13 @@ CAT2ID = {v: k for k, v in enumerate(CAT)}
 
 DSIFT_STEP = 2
 
-DEBUG = True
+DEBUG = False
 
 DISTANCE_METRIC = "minkowski"
+
+K_VALUE = 3
+
+MINKOWSKI_P_VALUE = 1.05
 
 ########################################
 ###### FEATURE UTILS              ######
@@ -132,7 +137,7 @@ def build_vocabulary(img_paths, vocab_size=400):
         image = Image.open(image_path)
         frames, descriptors = dsift(np.array(image).astype(
             np.float32), step=DSIFT_STEP, fast=True)
-        for idx in random.sample(range(len(descriptors)), len(descriptors)//20):
+        for idx in random.sample(range(len(descriptors)), len(descriptors)//40):
             features.append(descriptors[idx])
         if DEBUG:
             print(f"vocab of {image_path} done!")
@@ -179,12 +184,19 @@ def get_bags_of_sifts(img_paths, vocab):
     #   1. we recommend first completing function 'build_vocabulary()'         #
     ############################################################################
     img_feats = []
-
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    vocab_tensor = torch.from_numpy(vocab).type(torch.float32)
+    vocab_tensor.to(device)
     for image_path in img_paths:
         image = Image.open(image_path)
         frames, descriptors = dsift(np.array(image).astype(
             np.float32), step=DSIFT_STEP, fast=True)
-        distances = cdist(vocab, descriptors, metric=DISTANCE_METRIC)
+        descriptors_tensor = torch.from_numpy(
+            descriptors).type(torch.float32)
+        descriptors_tensor.to(device)
+        distances_tensor = torch.cdist(
+            vocab_tensor, descriptors_tensor)
+        distances = distances_tensor.numpy()
         nearest_cluster_center_id = np.argmin(distances, axis=0)
         histogram, edges = np.histogram(
             nearest_cluster_center_id, bins=len(vocab))
@@ -252,7 +264,18 @@ def nearest_neighbor_classify(train_img_feats, train_labels, test_img_feats):
     ###########################################################################
 
     test_predicts = []
-
+    distances = cdist(test_img_feats, train_img_feats,
+                      metric=DISTANCE_METRIC, p=MINKOWSKI_P_VALUE)
+    for i in range(len(test_img_feats)):
+        k_smallest_idx = np.argpartition(distances[i], kth=K_VALUE)[:K_VALUE]
+        k_smallest_features = np.take_along_axis(
+            distances[i], k_smallest_idx, axis=0)
+        sorted_k_smallest_idx = k_smallest_idx[np.argsort(
+            k_smallest_features, axis=0)]
+        votes = np.zeros((len(CAT)))
+        for idx in sorted_k_smallest_idx:
+            votes[CAT2ID[train_labels[idx]]] += (1 / distances[i][idx])
+        test_predicts.append(CAT[votes.argmax()])
     ###########################################################################
     #                               END OF YOUR CODE                          #
     ###########################################################################
