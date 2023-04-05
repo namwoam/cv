@@ -56,7 +56,7 @@ def get_tiny_images(img_paths):
     #       slightly increase the performance                       #
     #################################################################
 
-    feature_image_size = 16
+    feature_image_size = 32
     tiny_img_feats = []
 
     for image_path in img_paths:

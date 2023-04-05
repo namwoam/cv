@@ -7,6 +7,7 @@ from torch.utils.data.dataset import Dataset
 from torch.utils.data import DataLoader
 from PIL import Image
 
+
 def get_dataloader(dataset_dir, batch_size=1, split='test'):
     ###############################
     # TODO:                       #
@@ -14,26 +15,34 @@ def get_dataloader(dataset_dir, batch_size=1, split='test'):
     ###############################
     if split == 'train':
         transform = transforms.Compose([
-            transforms.Resize((32,32)),
+            transforms.Resize((32, 32)),
             ##### TODO: Data Augmentation Begin #####
-           
+            transforms.RandomHorizontalFlip(),
+            transforms.RandomVerticalFlip(),
+            transforms.RandomRotation(20),
+            transforms.ColorJitter(brightness=(
+                0.1, 0.6), contrast=1, saturation=0, hue=0.4),
             ##### TODO: Data Augmentation End #####
             transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[
+                                 0.229, 0.224, 0.225])
         ])
-    else: # 'val' or 'test'
+    else:  # 'val' or 'test'
         transform = transforms.Compose([
-            transforms.Resize((32,32)),
+            transforms.Resize((32, 32)),
             # we usually don't apply data augmentation on test or val data
             transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[
+                                 0.229, 0.224, 0.225])
         ])
 
     dataset = CIFAR10Dataset(dataset_dir, split=split, transform=transform)
 
-    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=(split=='train'), num_workers=0, pin_memory=True, drop_last=(split=='train'))
+    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=(
+        split == 'train'), num_workers=0, pin_memory=True, drop_last=(split == 'train'))
 
     return dataloader
+
 
 class CIFAR10Dataset(Dataset):
     def __init__(self, dataset_dir, split='test', transform=None):
@@ -44,7 +53,7 @@ class CIFAR10Dataset(Dataset):
 
         with open(os.path.join(self.dataset_dir, 'annotations.json'), 'r') as f:
             json_data = json.load(f)
-        
+
         self.image_names = json_data['filenames']
         if self.split != 'test':
             self.labels = json_data['labels']
@@ -53,13 +62,12 @@ class CIFAR10Dataset(Dataset):
 
     def __len__(self):
         return len(self.image_names)
-    
-    def __getitem__(self, index):
 
+    def __getitem__(self, index):
         ########################################################
         # TODO:                                                #
         # Define the CIFAR10Dataset class:                     #
-        #   1. use Image.open() to load image according to the # 
+        #   1. use Image.open() to load image according to the #
         #      self.image_names                                #
         #   2. apply transform on image                        #
         #   3. if not test set, return image and label with    #
@@ -69,10 +77,24 @@ class CIFAR10Dataset(Dataset):
         # NOTE:                                                #
         # You will not have labels if it's test set            #
         ########################################################
-
+        image_name = self.image_names[index]
+        image = Image.open(os.path.join(self.dataset_dir, image_name))
+        image_converter = transforms.PILToTensor()
+        image_tensor = image_converter(image).float().clone().detach()
+        if self.split == "test":
+            return {
+                "images": image_tensor
+            }
+        else:
+            label = self.labels[index]
+            label_tensor = torch.tensor(label, dtype=torch.long)
+            return {
+                "images": image_tensor,
+                "labels": label_tensor
+            }
         pass
 
         # return {
-        #     'images': image, 
+        #     'images': image,
         #     'labels': label
         # }

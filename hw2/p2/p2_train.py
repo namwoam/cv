@@ -14,6 +14,7 @@ from utils import set_seed, write_config_log, write_result_log
 
 import config as cfg
 
+
 def plot_learning_curve(logfile_dir, result_lists):
     ################################################################
     # TODO:                                                        #
@@ -33,8 +34,9 @@ def plot_learning_curve(logfile_dir, result_lists):
     # plot being unsaved if early stop, so the result_lists's size #
     # is not fixed.                                                #
     ################################################################
-    
+
     pass
+
 
 def train(model, train_loader, val_loader, logfile_dir, model_save_dir, criterion, optimizer, scheduler, device):
 
@@ -49,10 +51,12 @@ def train(model, train_loader, val_loader, logfile_dir, model_save_dir, criterio
         train_correct = 0.0
         model.train()
         for batch, data in enumerate(train_loader):
-            sys.stdout.write(f'\r[{epoch + 1}/{cfg.epochs}] Train batch: {batch + 1} / {len(train_loader)}')
+            sys.stdout.write(
+                f'\r[{epoch + 1}/{cfg.epochs}] Train batch: {batch + 1} / {len(train_loader)}')
             sys.stdout.flush()
             # Data loading.
-            images, labels = data['images'].to(device), data['labels'].to(device) # (batch_size, 3, 32, 32), (batch_size)
+            images, labels = data['images'].to(device), data['labels'].to(
+                device)  # (batch_size, 3, 32, 32), (batch_size)
             # Forward pass. input: (batch_size, 3, 32, 32), output: (batch_size, 10)
             pred = model(images)
             # Calculate loss.
@@ -88,7 +92,13 @@ def train(model, train_loader, val_loader, logfile_dir, model_save_dir, criterio
             # You don't have to update parameters, just record the      #
             # accuracy and loss.                                        #
             #############################################################
-            
+            for batch, data in enumerate(val_loader):
+                images, labels = data['images'].to(device), data['labels'].to(
+                    device)  # (batch_size, 3, 32, 32), (batch_size)
+            # Forward pass. input: (batch_size, 3, 32, 32), output: (batch_size, 10)
+                pred = model(images)
+                val_correct += torch.sum(torch.argmax(pred, dim=1) == labels)
+                val_loss += criterion(pred, labels).item()
             ######################### TODO End ##########################
 
         # Print validation result
@@ -99,19 +109,22 @@ def train(model, train_loader, val_loader, logfile_dir, model_save_dir, criterio
         val_loss_list.append(val_loss)
         print()
         print(f'[{epoch + 1}/{cfg.epochs}] {val_time:.2f} sec(s) Val Acc: {val_acc:.5f} | Val Loss: {val_loss:.5f}')
-        
+
         # Scheduler step
         scheduler.step()
 
         ##### WRITE LOG #####
         is_better = val_acc >= best_acc
         epoch_time = train_time + val_time
-        write_result_log(os.path.join(logfile_dir, 'result_log.txt'), epoch, epoch_time, train_acc, val_acc, train_loss, val_loss, is_better)
+        write_result_log(os.path.join(logfile_dir, 'result_log.txt'), epoch,
+                         epoch_time, train_acc, val_acc, train_loss, val_loss, is_better)
 
         ##### SAVE THE BEST MODEL #####
         if is_better:
-            print(f'[{epoch + 1}/{cfg.epochs}] Save best model to {model_save_dir} ...')
-            torch.save(model.state_dict(), os.path.join(model_save_dir, 'model_best.pth'))
+            print(
+                f'[{epoch + 1}/{cfg.epochs}] Save best model to {model_save_dir} ...')
+            torch.save(model.state_dict(), os.path.join(
+                model_save_dir, 'model_best.pth'))
             best_acc = val_acc
 
         ##### PLOT LEARNING CURVE #####
@@ -124,16 +137,19 @@ def train(model, train_loader, val_loader, logfile_dir, model_save_dir, criterio
         }
         plot_learning_curve(logfile_dir, current_result_lists)
 
+
 def main():
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dataset_dir', help='dataset directory', type=str, default='../hw2_data/p2_data/')
+    parser.add_argument('--dataset_dir', help='dataset directory',
+                        type=str, default='../hw2_data/p2_data/')
     args = parser.parse_args()
 
     dataset_dir = args.dataset_dir
 
     # Experiment name
-    exp_name = cfg.model_type + datetime.now().strftime('_%Y_%m_%d_%H_%M_%S') + '_' + cfg.exp_name
+    exp_name = cfg.model_type + datetime.now().strftime('_%Y_%m_%d_%H_%M_%S') + \
+        '_' + cfg.exp_name
 
     # Write log file for config
     logfile_dir = os.path.join('./experiment', exp_name, 'log')
@@ -164,28 +180,33 @@ def main():
 
     ##### DATALOADER #####
     ##### TODO: check dataset.py #####
-    train_loader = get_dataloader(os.path.join(dataset_dir, 'train'), batch_size=cfg.batch_size, split='train')
-    val_loader   = get_dataloader(os.path.join(dataset_dir, 'val'), batch_size=cfg.batch_size, split='val')
+    train_loader = get_dataloader(os.path.join(
+        dataset_dir, 'train'), batch_size=cfg.batch_size, split='train')
+    val_loader = get_dataloader(os.path.join(
+        dataset_dir, 'val'), batch_size=cfg.batch_size, split='val')
 
     ##### LOSS & OPTIMIZER #####
     criterion = nn.CrossEntropyLoss()
     if cfg.use_adam:
         optimizer = torch.optim.Adam(model.parameters(), lr=cfg.lr)
     else:
-        optimizer = torch.optim.SGD(model.parameters(), lr=cfg.lr, momentum=0.9, weight_decay=1e-6)
-    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=cfg.milestones, gamma=0.1)
-    
+        optimizer = torch.optim.SGD(
+            model.parameters(), lr=cfg.lr, momentum=0.9, weight_decay=1e-6)
+    scheduler = torch.optim.lr_scheduler.MultiStepLR(
+        optimizer, milestones=cfg.milestones, gamma=0.1)
+
     ##### TRAINING & VALIDATION #####
     ##### TODO: check train() in this file #####
-    train(model          = model,
-          train_loader   = train_loader,
-          val_loader     = val_loader,
-          logfile_dir    = logfile_dir,
-          model_save_dir = model_save_dir,
-          criterion      = criterion,
-          optimizer      = optimizer,
-          scheduler      = scheduler,
-          device         = device)
-    
+    train(model=model,
+          train_loader=train_loader,
+          val_loader=val_loader,
+          logfile_dir=logfile_dir,
+          model_save_dir=model_save_dir,
+          criterion=criterion,
+          optimizer=optimizer,
+          scheduler=scheduler,
+          device=device)
+
+
 if __name__ == '__main__':
     main()
