@@ -61,7 +61,9 @@ class ResNet18(nn.Module):
 
         # (batch_size, 3, 32, 32)
         self.resnet = models.resnet18(weights="DEFAULT")
-        self.resnet.conv1.kernel_size = (4, 4)
+        self.resnet.conv1.kernel_size = (3, 3)
+        self.resnet.conv1.stride = (1, 1)
+        self.resnet.maxpool = Identity()  # type: ignore
         # (batch_size, 512)
         self.resnet.fc = nn.Linear(self.resnet.fc.in_features, 10)
         # (batch_size, 10)

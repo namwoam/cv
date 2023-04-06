@@ -5,7 +5,7 @@
 ################################################################
 
 # Experiment Settings
-exp_name = 'sgd_da_small-kernal'  # name of experiment
+exp_name = 'sgd_da+_modified'  # name of experiment
 
 # Model Options
 model_type = 'resnet18'  # 'mynet' or 'resnet18'
