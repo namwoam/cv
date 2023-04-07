@@ -17,7 +17,7 @@ def get_dataloader(dataset_dir, batch_size=1, split='test'):
         transform = transforms.Compose([
             transforms.Resize((32, 32)),
             ##### TODO: Data Augmentation Begin #####
-            transforms.RandAugment(magnitude=30, num_ops=4),
+            transforms.RandAugment(num_ops=4, magnitude=20),
             ##### TODO: Data Augmentation End #####
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[

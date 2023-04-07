@@ -8,11 +8,11 @@
 exp_name = 'adam_da+_modified'  # name of experiment
 
 # Model Options
-model_type = 'resnet18'  # 'mynet' or 'resnet18'
+model_type = 'resnet'  # 'mynet' or 'resnet18'
 
 # Learning Options
 epochs = 50           # train how many epochs
 batch_size = 32           # batch size for dataloader
-use_adam = False       # Adam or SGD optimizer
-lr = 1e-4       # learning rate
+use_adam = True      # Adam or SGD optimizer
+lr = 0.0001      # learning rate
 milestones = [16, 32, 45]  # reduce learning rate at 'milestones' epochs

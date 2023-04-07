@@ -1,0 +1,7 @@
+Experiment Name = adam_da+_modified
+Model Type      = mynet
+Num epochs      = 50
+Batch size      = 32
+Use adam        = True
+Learning rate   = 0.0001
+Scheduler step  = [16, 32, 45]

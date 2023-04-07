@@ -41,25 +41,43 @@ def plot_learning_curve(logfile_dir, result_lists):
     plt.gca().yaxis.set_major_formatter(
         StrMethodFormatter('{x:,.2f}'))  # 2 decimal places
 
-    acc_fig = plt.figure()
+    train_acc_fig = plt.figure()
     plt.plot([el.cpu() for el in result_lists["train_acc"]],
              label='Training Accuracy')
-    plt.plot([el.cpu() for el in result_lists["val_acc"]],
-             label='Validation Accuracy')
-    plt.title('Training vs. Validation Accuracy')
+    plt.title('Training Accuracy')
     plt.xlabel('Epochs')
     plt.ylabel('Accuracy')
     plt.legend(loc='lower right')
-    plt.savefig(os.path.join(logfile_dir, 'accuracy_plot.png'))
+    plt.savefig(os.path.join(logfile_dir, 'train_accuracy_plot.png'))
+    plt.close()
 
-    loss_fig = plt.figure()
+    val_acc_fig = plt.figure()
+    plt.plot([el.cpu() for el in result_lists["val_acc"]],
+             label='Validation Accuracy')
+    plt.title('Validation Accuracy')
+    plt.xlabel('Epochs')
+    plt.ylabel('Accuracy')
+    plt.legend(loc='lower right')
+    plt.savefig(os.path.join(logfile_dir, 'val_accuracy_plot.png'))
+    plt.close()
+
+    train_loss_fig = plt.figure()
     plt.plot(result_lists["train_loss"], label='Training Loss')
-    plt.plot(result_lists["val_loss"], label='Validation Loss')
-    plt.title('Training vs. Validation Loss')
+    plt.title('Training Loss')
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
     plt.legend(loc='upper right')
-    plt.savefig(os.path.join(logfile_dir, 'loss_plot.png'))
+    plt.savefig(os.path.join(logfile_dir, 'train_loss_plot.png'))
+    plt.close()
+
+    val_loss_fig = plt.figure()
+    plt.plot(result_lists["val_loss"], label='Validation Loss')
+    plt.title('Validation Loss')
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss')
+    plt.legend(loc='upper right')
+    plt.savefig(os.path.join(logfile_dir, 'val_loss_plot.png'))
+    plt.close()
 
 
 pass
