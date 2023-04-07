@@ -7,6 +7,9 @@ from datetime import datetime
 import torch
 import torch.nn as nn
 import matplotlib.pyplot as plt
+import matplotlib as mpl
+from matplotlib.ticker import StrMethodFormatter
+
 
 from model import MyNet, ResNet18
 from dataset import get_dataloader
@@ -34,8 +37,32 @@ def plot_learning_curve(logfile_dir, result_lists):
     # plot being unsaved if early stop, so the result_lists's size #
     # is not fixed.                                                #
     ################################################################
+    mpl.rcParams['figure.dpi'] = 300
+    plt.gca().yaxis.set_major_formatter(
+        StrMethodFormatter('{x:,.2f}'))  # 2 decimal places
 
-    pass
+    acc_fig = plt.figure()
+    plt.plot([el.cpu() for el in result_lists["train_acc"]],
+             label='Training Accuracy')
+    plt.plot([el.cpu() for el in result_lists["val_acc"]],
+             label='Validation Accuracy')
+    plt.title('Training vs. Validation Accuracy')
+    plt.xlabel('Epochs')
+    plt.ylabel('Accuracy')
+    plt.legend(loc='lower right')
+    plt.savefig(os.path.join(logfile_dir, 'accuracy_plot.png'))
+
+    loss_fig = plt.figure()
+    plt.plot(result_lists["train_loss"], label='Training Loss')
+    plt.plot(result_lists["val_loss"], label='Validation Loss')
+    plt.title('Training vs. Validation Loss')
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss')
+    plt.legend(loc='upper right')
+    plt.savefig(os.path.join(logfile_dir, 'loss_plot.png'))
+
+
+pass
 
 
 def train(model, train_loader, val_loader, logfile_dir, model_save_dir, criterion, optimizer, scheduler, device):

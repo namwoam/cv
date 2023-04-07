@@ -5,7 +5,7 @@
 ################################################################
 
 # Experiment Settings
-exp_name = 'sgd_da+_modified'  # name of experiment
+exp_name = 'adam_da+_modified'  # name of experiment
 
 # Model Options
 model_type = 'resnet18'  # 'mynet' or 'resnet18'
@@ -14,5 +14,5 @@ model_type = 'resnet18'  # 'mynet' or 'resnet18'
 epochs = 50           # train how many epochs
 batch_size = 32           # batch size for dataloader
 use_adam = False       # Adam or SGD optimizer
-lr = 1e-3       # learning rate
+lr = 1e-4       # learning rate
 milestones = [16, 32, 45]  # reduce learning rate at 'milestones' epochs
