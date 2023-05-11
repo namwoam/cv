@@ -14,27 +14,37 @@ def planarAR(REF_IMAGE_PATH, VIDEO_PATH):
     video = cv2.VideoCapture(VIDEO_PATH)
     ref_image = cv2.imread(REF_IMAGE_PATH)
     h, w, c = ref_image.shape
-    film_h, film_w = int(video.get(cv2.CAP_PROP_FRAME_HEIGHT)), int(video.get(cv2.CAP_PROP_FRAME_WIDTH))
+    film_h, film_w = int(video.get(cv2.CAP_PROP_FRAME_HEIGHT)), int(
+        video.get(cv2.CAP_PROP_FRAME_WIDTH))
     film_fps = video.get(cv2.CAP_PROP_FPS)
     fourcc = cv2.VideoWriter_fourcc(*'DIVX')
-    videowriter = cv2.VideoWriter("output2.avi", fourcc, film_fps, (film_w, film_h))
+    videowriter = cv2.VideoWriter(
+        "output2.avi", fourcc, film_fps, (film_w, film_h))
     arucoDict = aruco.Dictionary_get(aruco.DICT_4X4_50)
     arucoParameters = aruco.DetectorParameters_create()
     ref_corns = np.array([[0, 0], [w, 0], [w, h], [0, h]])
 
     # TODO: find homography per frame and apply backward warp
-    pbar = tqdm(total = 353)
+    pbar = tqdm(total=353)
     while (video.isOpened()):
         ret, frame = video.read()
-        if ret:  ## check whethere the frame is legal, i.e., there still exists a frame
+        if ret:  # check whethere the frame is legal, i.e., there still exists a frame
             # TODO: 1.find corners with aruco
             # function call to aruco.detectMarkers()
-
+            marker_corners, ids, rejected = aruco.detectMarkers(
+                frame, arucoDict, parameters=arucoParameters)
+            corners = np.round(
+                marker_corners[0].reshape((4, 2))).astype(np.int32)
             # TODO: 2.find homograpy
             # function call to solve_homography()
 
+            H = solve_homography(ref_corns, corners)
+
             # TODO: 3.apply backward warp
             # function call to warping()
+
+            warping(ref_image, frame, H, np.min(corners, axis=0)[1], np.max(corners, axis=0)[
+                    1], np.min(corners, axis=0)[0], np.max(corners, axis=0)[0])
 
             videowriter.write(frame)
             pbar.update(1)

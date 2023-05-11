@@ -18,8 +18,8 @@ def transform(img, canvas, corners):
                   [0, h]
                   ])
     H = solve_homography(x, corners)
-    
-    return  warping(img, canvas, H, 0, h, 0, w, direction='f')
+
+    return warping(img, canvas, H, 0, h, 0, w, direction='f')
 
 
 if __name__ == "__main__":
@@ -34,8 +34,10 @@ if __name__ == "__main__":
     img4 = cv2.imread('../resource/img4.jpg')
     img5 = cv2.imread('../resource/img5.png')
 
-    canvas_corners1 = np.array([[749, 521], [883, 525], [883, 750], [750, 750]])
-    canvas_corners2 = np.array([[1395, 511], [1564, 434], [1573, 1013], [1402, 1012]])
+    canvas_corners1 = np.array(
+        [[749, 521], [883, 525], [883, 750], [750, 750]])
+    canvas_corners2 = np.array(
+        [[1395, 511], [1564, 434], [1573, 1013], [1402, 1012]])
     canvas_corners3 = np.array([[113, 185], [224, 268], [208, 519], [97, 474]])
     canvas_corners4 = np.array([[116, 632], [260, 684], [222, 956], [66, 949]])
     canvas_corners5 = np.array([[725, 62], [893, 62], [893, 191], [724, 192]])
