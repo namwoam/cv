@@ -1,2 +1,2 @@
-numpy
-opencv-contrib-python==3.4.2.16
+numpy==1.21.0
+opencv-contrib-python==3.4.2.17
