@@ -2,8 +2,10 @@ import numpy as np
 import cv2
 import argparse
 import time
-import os, glob
+import os
+import glob
 from computeDisp import computeDisp
+
 
 def evaluate(disp_input, disp_gt, scale_factor, threshold=1.0):
     disp_input = np.uint8(disp_input * scale_factor)
@@ -22,10 +24,14 @@ def evaluate(disp_input, disp_gt, scale_factor, threshold=1.0):
 
     return float(nr_error)/nr_pixel
 
+
 def main():
-    parser = argparse.ArgumentParser(description='evaluation function of stereo matching')
-    parser.add_argument('--dataset_path', default='./testdata/', help='path to testing dataset')
-    parser.add_argument('--image', choices=['Tsukuba', 'Venus', 'Teddy', 'Cones'], required=True, help='choose testing image')
+    parser = argparse.ArgumentParser(
+        description='evaluation function of stereo matching')
+    parser.add_argument('--dataset_path', default='./testdata/',
+                        help='path to testing dataset')
+    parser.add_argument('--image', choices=['Tsukuba', 'Venus',
+                        'Teddy', 'Cones'], required=True, help='choose testing image')
     args = parser.parse_args()
 
     config = {'Tsukuba': (15, 16),
@@ -33,16 +39,19 @@ def main():
               'Teddy':   (60, 4),
               'Cones':   (60, 4)}
 
-    print('Processing image %s ...'%args.image)
+    print('Processing image %s ...' % args.image)
     t0 = time.time()
-    img_left = cv2.imread(os.path.join(args.dataset_path, args.image, 'img_left.png'))
-    img_right = cv2.imread(os.path.join(args.dataset_path, args.image, 'img_right.png'))
+    img_left = cv2.imread(os.path.join(
+        args.dataset_path, args.image, 'img_left.png'))
+    img_right = cv2.imread(os.path.join(
+        args.dataset_path, args.image, 'img_right.png'))
     max_disp, scale_factor = config[args.image]
     labels = computeDisp(img_left, img_right, max_disp)
     print('[Time] %.4f sec' % (time.time()-t0))
 
     if glob.glob(os.path.join(args.dataset_path, args.image, 'disp_gt.*')):
-        gt_path = glob.glob(os.path.join(args.dataset_path, args.image, 'disp_gt.*'))[0]
+        gt_path = glob.glob(os.path.join(
+            args.dataset_path, args.image, 'disp_gt.*'))[0]
         img_gt = cv2.imread(gt_path, -1)
         error = evaluate(labels, img_gt, scale_factor)
         print('[Bad Pixel Ratio] %.2f%%' % (error*100))
